@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<title>Smart Hybrid Predictive Routing</title>
+
+
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+<link rel="stylesheet" href="style.css" />
+
+</head>
+
+<body>
+
+<div class="app">
+
+<aside class="sidebar glass">
+
+<div class="brand">
+<div class="logo">⚡</div>
+<div class="brand-text">
+<h1>Hybrid Route</h1>
+<p>Bengaluru Pilot</p>
+</div>
+</div>
+
+
+
+<div class="section">
+<label class="label">Vehicle</label>
+
+<div class="seg">
+<button class="seg-btn active" data-veh="EV">EV</button>
+<button class="seg-btn" data-veh="Petrol">Petrol</button>
+</div>
+
+</div>
+
+
+<div class="section">
+
+<label class="label">Battery / Fuel</label>
+
+<div class="range-wrap">
+
+<input id="fuelLevel" type="range" min="0" max="100" value="60">
+
+<div class="range-badge">
+<span id="fuelLabel">60%</span>
+</div>
+
+</div>
+
+</div>
+
+
+
+<div class="section">
+<label class="label">Source</label>
+<input id="source" class="input" placeholder="MG Road, Bengaluru" />
+</div>
+
+
+
+<div class="section">
+<label class="label">Stop (Optional)</label>
+<input id="stop" class="input" placeholder="Koramangala, Bengaluru" />
+</div>
+
+
+
+<div class="section">
+<label class="label">Destination</label>
+<input id="destination" class="input" placeholder="Indiranagar, Bengaluru" />
+</div>
+
+
+
+<button id="planBtn" class="button-cta">
+
+Plan Smart Route
+
+<span class="sparkle">✦</span>
+
+</button>
+
+<div class="divider"></div>
+
+
+
+<div class="metrics">
+
+<div class="metric">
+
+<div class="metric-label">Distance</div>
+
+<div class="metric-value" id="dist">—</div>
+
+</div>
+
+<div class="metric">
+
+<div class="metric-label">ETA</div>
+
+<div class="metric-value" id="eta">—</div>
+
+</div>
+
+<div class="metric">
+
+<div class="metric-label">Energy / Fuel</div>
+
+<div class="metric-value" id="consumption">—</div>
+
+</div>
+
+<div class="metric">
+
+<div class="metric-label">Trip Status</div>
+
+<div class="metric-chip" id="status">
+
+<span>—</span>
+
+</div>
+
+</div>
+
+
+
+<div class="metric">
+
+<div class="metric-label">Auto Stop</div>
+
+<div class="metric-value" id="autostop">None</div>
+
+</div>
+
+</div>
+
+
+
+<div class="legend">
+
+<div><span class="chip chip-ev"></span> EV Station</div>
+
+<div><span class="chip chip-fuel"></span> Fuel Station</div>
+
+<div><span class="chip chip-ok"></span> Normal Traffic</div>
+
+<div><span class="chip chip-peak"></span> Peak Traffic</div>
+
+</div>
+
+<div class="footer-note">
+
+Prototype • Phase 2 • MUJ
+
+</div>
+
+</aside>
+
+
+
+<main class="map-area">
+
+<div id="map"></div>
+
+
+
+<div id="toast" class="toast hidden">
+
+<div class="toast-icon">🧭</div>
+
+<div class="toast-body">
+
+<div class="toast-title">Suggested Stop</div>
+
+<div class="toast-text" id="toastText">—</div>
+
+</div>
+
+</div>
+
+</main>
+
+</div>
+
+
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script src="script.js"></script>
+
+</body>
+</html>
