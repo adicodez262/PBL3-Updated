@@ -340,6 +340,57 @@ display:inline-block;
 
 }
 
+.analysis-panel{
+background:var(--card);
+border-radius:14px;
+padding:14px;
+border:1px solid var(--stroke);
+}
+.analysis-badge{
+font-size:11px;
+font-weight:700;
+letter-spacing:1px;
+color:#22d3ee;
+}
+.analysis-list{
+margin:10px 0;
+display:flex;
+flex-direction:column;
+gap:6px;
+font-size:13px;
+}
+.analysis-row{
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+.analysis-key{
+color:var(--muted);
+}
+.analysis-val{
+font-weight:600;
+}
+.decision-box{
+margin-top:10px;
+padding:10px;
+border-radius:10px;
+background:rgba(15,23,42,0.6);
+border-left:3px solid var(--brand);
+}
+.decision-title{
+font-size:11px;
+color:var(--muted);
+margin-bottom:4px;
+text-transform:uppercase;
+letter-spacing:0.5px;
+}
+.decision-text{
+font-size:12px;
+line-height:1.4;
+color:#e2e8f0;
+font-style:italic;
+}
+
 
 .legend{
 

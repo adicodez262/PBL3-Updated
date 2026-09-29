@@ -63,8 +63,16 @@ const statusChip = $("#status")
 const toast = $("#toast")
 const toastText = $("#toastText")
 
-
-
+function updateRouteAnalysis(dist, eta, energy, traffic, status, stop, decision){
+if($("#ra-dist")) $("#ra-dist").textContent=dist
+if($("#ra-eta")) $("#ra-eta").textContent=eta
+if($("#ra-energy")) $("#ra-energy").textContent=energy
+if($("#ra-traffic")) $("#ra-traffic").textContent=traffic
+if($("#ra-status")) $("#ra-status").textContent=status
+if($("#ra-stop")) $("#ra-stop").textContent=stop
+if($("#ra-decision")) $("#ra-decision").textContent=decision
+if($("#ra-energy-label")) $("#ra-energy-label").textContent=(vehicle==="EV"?"Energy Required:":"Fuel Required:")
+}
 
 function initMap(){
 
@@ -397,6 +405,15 @@ map.fitBounds(routeLine.getBounds())
 animateCar(routeCoords)
 $("#autostop").textContent="None Reachable"
 statusChip.innerHTML="<span>No Reachable Stop</span>"
+updateRouteAnalysis(
+  (dist/1000).toFixed(2)+" km",
+  Math.round((time*traffic.multiplier)/60)+" min",
+  cons.text,
+  traffic.level,
+  "No Reachable Stop",
+  "None Reachable",
+  "No compatible station is reachable with the current battery/fuel level."
+)
 return
 }
 
@@ -428,6 +445,18 @@ const newCons=computeConsumption(totalDist, fuel)
 $("#dist").textContent=(totalDist/1000).toFixed(2)+" km"
 $("#eta").textContent=Math.round((totalTime*traffic.multiplier)/60)+" min"
 $("#consumption").textContent=newCons.text
+
+const energyWord = vehicle === "EV" ? "battery" : "fuel"
+const actionWord = vehicle === "EV" ? "charging" : "refueling"
+updateRouteAnalysis(
+  (totalDist/1000).toFixed(2)+" km",
+  Math.round((totalTime*traffic.multiplier)/60)+" min",
+  newCons.text,
+  traffic.level,
+  "Stop Required",
+  selectedStation.name,
+  `Current ${energyWord} is insufficient for the complete trip. A ${actionWord} stop is recommended.`
+)
 }
 
 const autostopEl=$("#autostop")
@@ -465,6 +494,17 @@ animateCar(routeCoords)
 $("#autostop").textContent="None"
 
 statusChip.innerHTML="<span>Enough</span>"
+
+const energyWord = vehicle === "EV" ? "battery" : "fuel"
+updateRouteAnalysis(
+  (dist/1000).toFixed(2)+" km",
+  Math.round((time*traffic.multiplier)/60)+" min",
+  cons.text,
+  traffic.level,
+  "Sufficient",
+  "None",
+  `Current ${energyWord} is sufficient for the complete trip.`
+)
 
 }
 
