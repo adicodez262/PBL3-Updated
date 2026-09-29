@@ -351,7 +351,7 @@ gap:10px;
 
 margin-top:16px;
 
-font-size:13px;
+font-size:12px;
 
 }
 
@@ -387,9 +387,27 @@ background:#2563eb;
 
 }
 
+.chip-mod{
+
+background:#f59e0b;
+
+}
+
 .chip-peak{
 
 background:#ff0000;
+
+}
+
+.chip-pre{
+
+background:#ff0000;
+
+}
+
+.chip-post{
+
+background:#2563eb;
 
 }
 

@@ -47,6 +47,7 @@ const STATIONS = [
 
 let map
 let routeLine
+let routeLine2
 let routeCoords = []
 let carMarker
 
@@ -161,21 +162,32 @@ parseFloat(data[0].lon)
 
 function trafficFactor(){
 
-const h=new Date().getHours()
+const now = new Date()
+const day = now.getDay()
+const h = now.getHours()
+const isWeekend = (day === 0 || day === 6)
 
-if((h>=8 && h<=10)||(h>=17 && h<=19))
-return 1.3
+if(h >= 22 || h <= 6)
+return { multiplier: 0.9, level: "Low" }
 
-if(h>=22||h<=6)
-return 0.9
+if(isWeekend)
+return { multiplier: 1.1, level: "Moderate" }
 
-return 1
+if((h >= 8 && h <= 10) || (h >= 17 && h <= 19))
+return { multiplier: 1.3, level: "High" }
+
+if(h >= 12 && h <= 16)
+return { multiplier: 1.15, level: "Moderate" }
+
+return { multiplier: 1.0, level: "Low" }
 
 }
 
-function routeColor(tf){
+function routeColor(level){
 
-return tf>1 ? "#ff0000" : "#2563eb"
+if(level === "High") return "#ff0000"
+if(level === "Moderate") return "#f59e0b"
+return "#2563eb"
 
 }
 
@@ -218,7 +230,7 @@ enough:liters<(fuel/100)*40
 
 
 
-function nearestStation(mid){
+function nearestStation(routeCoords){
 
 let best=null
 
@@ -228,11 +240,16 @@ STATIONS.forEach(s=>{
 
 if(s.type!==vehicle) return
 
-const d=map.distance(mid,[s.lat,s.lng])
+let minDist=Infinity
 
-if(d<bestDist){
+for(let i=0; i<routeCoords.length; i++){
+const d=map.distance(routeCoords[i],[s.lat,s.lng])
+if(d<minDist) minDist=d
+}
 
-bestDist=d
+if(minDist<bestDist){
+
+bestDist=minDist
 best=s
 
 }
@@ -243,7 +260,19 @@ return best
 
 }
 
+function getReachableStations(A, fuel){
+const maxKm = vehicle === "EV" ? ((fuel / 100) * 60) / 0.15 : ((fuel / 100) * 40) / 0.075
+return STATIONS.filter(s => {
+if(s.type !== vehicle) return false
+const dKm = map.distance(A, [s.lat, s.lng]) / 1000
+return dKm <= maxKm
+})
+}
 
+function clearRouteLines(){
+if(routeLine) { map.removeLayer(routeLine); routeLine = null }
+if(routeLine2) { map.removeLayer(routeLine2); routeLine2 = null }
+}
 
 async function fetchRoute(a,b){
 
@@ -341,65 +370,99 @@ r.geometry.coordinates.map(c=>[c[1],c[0]])
 
 })
 
-const tf=trafficFactor()
+const traffic=trafficFactor()
 
-const color=routeColor(tf)
-
-if(routeLine) map.removeLayer(routeLine)
-
-routeLine=L.polyline(routeCoords,{
-color,
-weight:7
-}).addTo(map)
-
-map.fitBounds(routeLine.getBounds())
-
-animateCar(routeCoords)
+clearRouteLines()
 
 const cons=computeConsumption(dist,fuel)
 
 $("#dist").textContent=(dist/1000).toFixed(2)+" km"
 
 $("#eta").textContent=
-Math.round((time*tf)/60)+" min"
+Math.round((time*traffic.multiplier)/60)+" min"
+
+$("#traffic").textContent=traffic.level
 
 $("#consumption").textContent=cons.text
 
 
 if(!cons.enough){
 
-const mid=
-routeCoords[Math.floor(routeCoords.length/2)]
+const recStation=nearestStation(routeCoords)
+const reachable=getReachableStations(A, fuel)
 
-const station=nearestStation(mid)
+if(reachable.length === 0){
+routeLine=L.polyline(routeCoords,{ color:"#ff0000", weight:7 }).addTo(map)
+map.fitBounds(routeLine.getBounds())
+animateCar(routeCoords)
+$("#autostop").textContent="None Reachable"
+statusChip.innerHTML="<span>No Reachable Stop</span>"
+return
+}
 
-if(station){
+const defaultStation=reachable.find(s => recStation && s.name === recStation.name) || reachable[0]
 
-toastText.textContent=station.name
-
+async function applyStationStop(selectedStation){
+toastText.textContent=selectedStation.name
 toast.classList.remove("hidden")
+clearRouteLines()
 
-const S=[station.lat,station.lng]
-
+const S=[selectedStation.lat,selectedStation.lng]
 const r1=await fetchRoute(A,S)
-
 const r2=await fetchRoute(S,B)
 
-routeCoords=
-r1.geometry.coordinates.map(c=>[c[1],c[0]])
-.concat(
-r2.geometry.coordinates.map(c=>[c[1],c[0]])
-)
+const leg1Coords=r1.geometry.coordinates.map(c=>[c[1],c[0]])
+const leg2Coords=r2.geometry.coordinates.map(c=>[c[1],c[0]])
 
-routeLine.setLatLngs(routeCoords)
+routeLine=L.polyline(leg1Coords,{ color:"#ff0000", weight:7 }).addTo(map)
+routeLine2=L.polyline(leg2Coords,{ color:"#2563eb", weight:7 }).addTo(map)
 
+const fullCoords=leg1Coords.concat(leg2Coords)
+map.fitBounds(L.featureGroup([routeLine, routeLine2]).getBounds())
+animateCar(fullCoords)
+
+const totalDist=r1.distance+r2.distance
+const totalTime=r1.duration+r2.duration
+const newCons=computeConsumption(totalDist, fuel)
+
+$("#dist").textContent=(totalDist/1000).toFixed(2)+" km"
+$("#eta").textContent=Math.round((totalTime*traffic.multiplier)/60)+" min"
+$("#consumption").textContent=newCons.text
 }
+
+const autostopEl=$("#autostop")
+autostopEl.innerHTML=""
+const select=document.createElement("select")
+select.style.cssText="width:100%;background:rgba(15,23,42,0.8);color:white;border:1px solid rgba(255,255,255,0.2);border-radius:6px;padding:3px 6px;font-size:12px;outline:none;"
+
+reachable.forEach(s => {
+const opt=document.createElement("option")
+opt.value=s.name
+const isRec=(s.name === defaultStation.name)
+opt.textContent=s.name + (isRec ? " (Recommended)" : "")
+if(isRec) opt.selected=true
+select.appendChild(opt)
+})
+
+select.onchange=()=>{
+const chosen=STATIONS.find(s=>s.name===select.value)
+if(chosen) applyStationStop(chosen)
+}
+autostopEl.appendChild(select)
+
+await applyStationStop(defaultStation)
 
 statusChip.innerHTML="<span>Stop Needed</span>"
 
 }
 
 else{
+
+routeLine=L.polyline(routeCoords,{ color:"#2563eb", weight:7 }).addTo(map)
+map.fitBounds(routeLine.getBounds())
+animateCar(routeCoords)
+
+$("#autostop").textContent="None"
 
 statusChip.innerHTML="<span>Enough</span>"
 
